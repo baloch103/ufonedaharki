@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مڪمل کاتو ۽ اسٽاڪ مئنيجمينٽ سسٽم</title>
+    <title>مڪمل کاتو، اسٽاڪ ۽ بيلنس شيٽ سسٽم</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Noto Naskh Arabic Font for clean Sindhi text -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Noto Naskh Arabic Font for Clean Sindhi Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Naskh Arabic', sans-serif; }
     </style>
@@ -18,11 +18,11 @@
 
     <div class="max-w-7xl mx-auto p-4 sm:p-6 space-y-8">
 
-        <!-- Top Header -->
+        <!-- Header Section -->
         <header class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-slate-800">مڪمل اڪائونٽس ۽ اسٽاڪ ڊئش بورڊ</h1>
-                <p class="text-sm text-slate-500 mt-1">پنھنجن کاتن، بينڪن ۽ سامان جي رقم جي تفصيل سنڀاليو</p>
+                <h1 class="text-2xl font-bold text-slate-800">مڪمل اڪائونٽس، اسٽاڪ ۽ بيلنس شيٽ ڊئش بورڊ</h1>
+                <p class="text-sm text-slate-500 mt-1">پنھنجن کاتن، بينڪ بيلنس، اسٽاڪ ۽ مالياتي حالت (Net Worth) جي مڪمل رڪارڊنگ</p>
             </div>
             <button onclick="loadAllData()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
@@ -30,7 +30,7 @@
             </button>
         </header>
 
-        <!-- Summary Metric Cards -->
+        <!-- Dynamic Summary Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-white border border-emerald-200 p-5 rounded-2xl shadow-sm border-r-4 border-r-emerald-500">
                 <span class="text-xs font-bold text-emerald-600 uppercase">مون رقم وٺڻي آھي (Receivables)</span>
@@ -54,7 +54,61 @@
             </div>
         </div>
 
-        <!-- Forms Grid (Data Entry Forms) -->
+        <!-- ---------------------------------------------------- -->
+        <!-- BALANCE SHEET SECTION (اثاثا بمقابله واجبات) -->
+        <!-- ---------------------------------------------------- -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center border-b pb-4 gap-2">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">مالياتي بيلنس شيٽ (Balance Sheet)</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">اثاثن ۽ واجبات جو مڪمل موازنو</p>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl text-left">
+                    <span class="text-xs text-slate-400 block font-semibold">صاف ماليت (Net Worth)</span>
+                    <span id="bs-net-worth" class="text-2xl font-black text-blue-600">Rs. 0</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Assets (اثاثا) -->
+                <div class="bg-emerald-50/50 p-5 rounded-xl border border-emerald-100 space-y-4">
+                    <div class="flex justify-between items-center border-b border-emerald-200 pb-2">
+                        <h3 class="font-bold text-emerald-800 text-sm">1. اثاثا (Total Assets)</h3>
+                        <span id="bs-total-assets" class="font-black text-emerald-700 text-lg">Rs. 0</span>
+                    </div>
+                    <ul class="space-y-3 text-sm text-slate-700">
+                        <li class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-emerald-100">
+                            <span>گراهڪن وٽ وٺڻي رقم (Receivables):</span>
+                            <span id="bs-receivable" class="font-bold text-emerald-700">Rs. 0</span>
+                        </li>
+                        <li class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-emerald-100">
+                            <span>بينڪن ۾ پيل رقم (Bank Balances):</span>
+                            <span id="bs-bank" class="font-bold text-blue-700">Rs. 0</span>
+                        </li>
+                        <li class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-emerald-100">
+                            <span>اسٽاڪ/سامان جي ماليت (Inventory Value):</span>
+                            <span id="bs-stock" class="font-bold text-amber-700">Rs. 0</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Liabilities (واجبات / قرض) -->
+                <div class="bg-rose-50/50 p-5 rounded-xl border border-rose-100 space-y-4">
+                    <div class="flex justify-between items-center border-b border-rose-200 pb-2">
+                        <h3 class="font-bold text-rose-800 text-sm">2. واجبات / ڏيڻيون رقمون (Liabilities)</h3>
+                        <span id="bs-total-liabilities" class="font-black text-rose-700 text-lg">Rs. 0</span>
+                    </div>
+                    <ul class="space-y-3 text-sm text-slate-700">
+                        <li class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-rose-100">
+                            <span>سپلاءِ رن يا ماڻھن جا مون ڏانھن (Payables):</span>
+                            <span id="bs-payable" class="font-bold text-rose-700">Rs. 0</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Entry Forms Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Form 1: Add Ledger -->
@@ -155,13 +209,13 @@
                             </tr>
                         </thead>
                         <tbody id="ledger-table-body" class="divide-y divide-slate-100">
-                            <!-- Rows Dynamic -->
+                            <!-- Dynamic Rows -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Grid for Bank and Stock Tables -->
+            <!-- Grid for Bank & Stock Tables -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
                 <!-- Bank Accounts List -->
@@ -202,16 +256,27 @@
     <!-- JavaScript Logic -->
     <script>
         // --- 1. Supabase Initialization ---
-        // توھان ھتي پنھنجو SUPABASE URL ۽ SUPABASE KEY وڌو
         const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT.supabase.co';
         const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- 2. Data Fetching & Dashboard Update ---
+        // Global State Variables for Balance Sheet Calculation
+        let totalReceivable = 0;
+        let totalPayable = 0;
+        let totalBankBalance = 0;
+        let totalStockValue = 0;
+
+        // --- 2. Load All System Data ---
         async function loadAllData() {
-            loadLedgers();
-            loadBanks();
-            loadStock();
+            totalReceivable = 0;
+            totalPayable = 0;
+            totalBankBalance = 0;
+            totalStockValue = 0;
+
+            await Promise.all([loadLedgers(), loadBanks(), loadStock()]);
+            
+            // Update Balance Sheet & Net Worth After All Data is Fetched
+            updateBalanceSheet();
         }
 
         // Fetch Ledgers
@@ -220,13 +285,10 @@
             const tbody = document.getElementById('ledger-table-body');
             tbody.innerHTML = '';
 
-            let totalRec = 0;
-            let totalPay = 0;
-
             if (ledgers && ledgers.length > 0) {
                 ledgers.forEach(row => {
-                    totalRec += Number(row.receivable || 0);
-                    totalPay += Number(row.payable || 0);
+                    totalReceivable += Number(row.receivable || 0);
+                    totalPayable += Number(row.payable || 0);
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-50">
@@ -244,8 +306,8 @@
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-400">ڪو به رڪارڊ موجود ناهي</td></tr>`;
             }
 
-            document.getElementById('total-receivable').innerText = `Rs. ${totalRec.toLocaleString()}`;
-            document.getElementById('total-payable').innerText = `Rs. ${totalPay.toLocaleString()}`;
+            document.getElementById('total-receivable').innerText = `Rs. ${totalReceivable.toLocaleString()}`;
+            document.getElementById('total-payable').innerText = `Rs. ${totalPayable.toLocaleString()}`;
         }
 
         // Fetch Bank Accounts
@@ -254,11 +316,9 @@
             const container = document.getElementById('bank-accounts-list');
             container.innerHTML = '';
 
-            let totalBank = 0;
-
             if (banks && banks.length > 0) {
                 banks.forEach(bank => {
-                    totalBank += Number(bank.balance || 0);
+                    totalBankBalance += Number(bank.balance || 0);
                     container.innerHTML += `
                         <div class="flex justify-between items-center p-3 border border-slate-200 rounded-xl bg-slate-50">
                             <div>
@@ -267,7 +327,7 @@
                             </div>
                             <div class="flex items-center gap-3">
                                 <span class="font-bold text-blue-600">Rs. ${Number(bank.balance).toLocaleString()}</span>
-                                <button onclick="deleteRow('bank_accounts', ${bank.id})" class="text-rose-500 hover:text-rose-700 text-xs">✕</button>
+                                <button onclick="deleteRow('bank_accounts', ${bank.id})" class="text-rose-500 hover:text-rose-700 text-xs font-bold">✕</button>
                             </div>
                         </div>
                     `;
@@ -276,7 +336,7 @@
                 container.innerHTML = `<div class="text-center py-4 text-slate-400">ڪو به بينڪ اڪائونٽ موجود ناهي</div>`;
             }
 
-            document.getElementById('total-bank-balance').innerText = `Rs. ${totalBank.toLocaleString()}`;
+            document.getElementById('total-bank-balance').innerText = `Rs. ${totalBankBalance.toLocaleString()}`;
         }
 
         // Fetch Stock
@@ -285,12 +345,10 @@
             const tbody = document.getElementById('stock-table-body');
             tbody.innerHTML = '';
 
-            let totalVal = 0;
-
             if (stockItems && stockItems.length > 0) {
                 stockItems.forEach(item => {
                     const itemTotal = Number(item.quantity) * Number(item.unit_price);
-                    totalVal += itemTotal;
+                    totalStockValue += itemTotal;
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-50">
@@ -299,7 +357,7 @@
                             <td class="py-2.5 px-3 text-slate-600">Rs. ${item.unit_price}</td>
                             <td class="py-2.5 px-3 font-bold text-slate-800">Rs. ${itemTotal.toLocaleString()}</td>
                             <td class="py-2.5 px-3 text-center">
-                                <button onclick="deleteRow('inventory', ${item.id})" class="text-rose-500 hover:text-rose-700 text-xs">✕</button>
+                                <button onclick="deleteRow('inventory', ${item.id})" class="text-rose-500 hover:text-rose-700 text-xs font-bold">✕</button>
                             </td>
                         </tr>
                     `;
@@ -308,11 +366,34 @@
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-400">ڪو به اسٽاڪ موجود ناهي</td></tr>`;
             }
 
-            document.getElementById('total-stock-value').innerText = `Rs. ${totalVal.toLocaleString()}`;
+            document.getElementById('total-stock-value').innerText = `Rs. ${totalStockValue.toLocaleString()}`;
         }
 
-        // --- 3. Add Data Functions ---
+        // --- 3. Balance Sheet Update Logic ---
+        function updateBalanceSheet() {
+            const totalAssets = totalReceivable + totalBankBalance + totalStockValue;
+            const totalLiabilities = totalPayable;
+            const netWorth = totalAssets - totalLiabilities;
 
+            document.getElementById('bs-receivable').innerText = `Rs. ${totalReceivable.toLocaleString()}`;
+            document.getElementById('bs-bank').innerText = `Rs. ${totalBankBalance.toLocaleString()}`;
+            document.getElementById('bs-stock').innerText = `Rs. ${totalStockValue.toLocaleString()}`;
+            document.getElementById('bs-total-assets').innerText = `Rs. ${totalAssets.toLocaleString()}`;
+
+            document.getElementById('bs-payable').innerText = `Rs. ${totalPayable.toLocaleString()}`;
+            document.getElementById('bs-total-liabilities').innerText = `Rs. ${totalLiabilities.toLocaleString()}`;
+
+            const netWorthEl = document.getElementById('bs-net-worth');
+            netWorthEl.innerText = `Rs. ${netWorth.toLocaleString()}`;
+            
+            if (netWorth < 0) {
+                netWorthEl.className = "text-2xl font-black text-rose-600";
+            } else {
+                netWorthEl.className = "text-2xl font-black text-blue-600";
+            }
+        }
+
+        // --- 4. Add Data Functions ---
         async function addLedger(e) {
             e.preventDefault();
             const party_name = document.getElementById('ledger-name').value;
@@ -323,8 +404,8 @@
             const { error } = await supabase.from('ledgers').insert([{ party_name, party_type, receivable, payable }]);
             if (!error) {
                 document.getElementById('form-ledger').reset();
-                loadLedgers();
-            } else { alert('خاطو شامل ڪرڻ ۾ مسلو آيو'); }
+                loadAllData();
+            } else { alert('خاتو شامل ڪرڻ ۾ مسلو آيو'); }
         }
 
         async function addBank(e) {
@@ -336,7 +417,7 @@
             const { error } = await supabase.from('bank_accounts').insert([{ bank_name, account_number, balance }]);
             if (!error) {
                 document.getElementById('form-bank').reset();
-                loadBanks();
+                loadAllData();
             } else { alert('بينڪ شامل ڪرڻ ۾ مسلو آيو'); }
         }
 
@@ -349,11 +430,11 @@
             const { error } = await supabase.from('inventory').insert([{ item_name, quantity, unit_price }]);
             if (!error) {
                 document.getElementById('form-stock').reset();
-                loadStock();
+                loadAllData();
             } else { alert('اسٽاڪ شامل ڪرڻ ۾ مسلو آيو'); }
         }
 
-        // --- 4. Delete Record Function ---
+        // --- 5. Delete Record Function ---
         async function deleteRow(tableName, id) {
             if (confirm('ڇا توھان واقعي ھي رڪارڊ ختم ڪرڻ چاھيو ٿا؟')) {
                 const { error } = await supabase.from(tableName).delete().eq('id', id);
@@ -361,7 +442,7 @@
             }
         }
 
-        // Initial Load Page Ready
+        // Run On Page Load
         document.addEventListener('DOMContentLoaded', loadAllData);
     </script>
 </body>
