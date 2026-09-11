@@ -1,373 +1,84 @@
-<!DOCTYPE html>
-<html lang="sd" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hasnain Communication - آٽوميٽڊ اسٽاڪ ۽ کاتي سسٽم</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body class="bg-slate-100 text-slate-800 font-sans">
+<div class="p-6 bg-slate-100 min-h-screen space-y-8 font-sans">
 
-  <!-- Header -->
-  <header class="bg-slate-900 text-white p-4 shadow-md">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-      <h1 class="text-xl font-bold text-sky-400">Hasnain Communication - POS & Ledger</h1>
-      <span class="text-xs bg-emerald-600 px-3 py-1 rounded-full font-bold">Smart Sync</span>
-    </div>
-  </header>
-
-  <main class="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-
-    <!-- TAB NAVIGATION -->
-    <div class="flex border-b border-slate-300 gap-2 font-bold text-sm">
-      <button onclick="switchTab('master')" id="btn-master" class="py-2 px-4 border-b-2 border-sky-500 text-sky-600">1. پروڊڪٽس ۽ بينڪ ٺاهيو</button>
-      <button onclick="switchTab('purchase')" id="btn-purchase" class="py-2 px-4 border-b-2 border-transparent text-slate-600">2. بينڪ مان اسٽاڪ خريد (Stock IN)</button>
-      <button onclick="switchTab('ledger')" id="btn-ledger" class="py-2 px-4 border-b-2 border-transparent text-slate-600">3. گراهڪ کاتو ۽ وڪرو (Stock OUT)</button>
+    <!-- Header Section -->
+    <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <h1 class="text-2xl font-bold text-slate-800">مڪمل خاتا ۽ بيلنس ڊئش بورڊ</h1>
+        <button onclick="loadDashboardData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition">
+            رڪارڊ تازو ڪريو (Refresh)
+        </button>
     </div>
 
-    <!-- TAB 1: MASTER CREATION -->
-    <section id="tab-sec-master" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      
-      <!-- Create Item Master -->
-      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <h2 class="text-md font-bold text-slate-900 border-b pb-2">نئون پروڊڪٽ ماسٽر ٺاهيو</h2>
-        <form onsubmit="handleCreateItem(event)" class="space-y-3">
-          <input type="text" id="item-name" required placeholder="پروڊڪٽ جو نالو (مثال: Ufone SIM)" class="w-full border rounded-lg p-2 text-xs">
-          <input type="number" id="item-cost" required placeholder="اصل خريد قيمت (Cost Price)" class="w-full border rounded-lg p-2 text-xs">
-          <input type="number" id="item-sale" required placeholder="وڪرو قيمت (Sale Price)" class="w-full border rounded-lg p-2 text-xs">
-          <button type="submit" class="w-full bg-sky-600 text-white font-bold py-2 rounded-lg text-xs">پروڊڪٽ آئيٽم سيو ڪريو</button>
-        </form>
-
-        <h3 class="text-xs font-bold text-slate-500 mt-4">موجود آئيٽمز لسٽ:</h3>
-        <div id="master-items-list" class="space-y-1 max-h-40 overflow-y-auto text-xs"></div>
-      </div>
-
-      <!-- Create Customer Accounts & Bank -->
-      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <h2 class="text-md font-bold text-slate-900 border-b pb-2">نئون کاتو / بينڪ ٺاهيو</h2>
-        
-        <!-- Account Head Form -->
-        <form onsubmit="handleCreateHead(event)" class="space-y-2">
-          <input type="text" id="head-name" required placeholder="گراهڪ/دوڪاندار جو نالو" class="w-full border rounded-lg p-2 text-xs">
-          <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2 rounded-lg text-xs">گراهڪ کاتو ٺاهيو</button>
-        </form>
-
-        <hr>
-
-        <!-- Bank Form -->
-        <form onsubmit="handleCreateBank(event)" class="space-y-2">
-          <input type="text" id="bank-name" required placeholder="بينڪ جو نالو (مثال: HBL, Easypaisa)" class="w-full border rounded-lg p-2 text-xs">
-          <input type="number" id="bank-bal" required placeholder="شروعاتي بينڪ بيلنس" class="w-full border rounded-lg p-2 text-xs">
-          <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2 rounded-lg text-xs">بينڪ اڪائونٽ شامل ڪريو</button>
-        </form>
-      </div>
-
-    </section>
-
-    <!-- TAB 2: STOCK IN (PURCHASE FROM BANK) -->
-    <section id="tab-sec-purchase" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4 max-w-xl mx-auto">
-        <h2 class="text-md font-bold text-slate-900 border-b pb-2">بينڪ مان مال / اسٽاڪ آرڊر ڪريو (Stock +)</h2>
-        <form onsubmit="handlePurchaseStock(event)" class="space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">ڪهڙي بينڪ مان رقم ڪٽجي؟</label>
-            <select id="p-bank" required class="w-full border rounded-lg p-2 text-xs"></select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">ڪهڙو اسٽاڪ گھرايو آھي؟</label>
-            <select id="p-item" required class="w-full border rounded-lg p-2 text-xs" onchange="calcPurchaseTotal()"></select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">تعداد (Quantity)</label>
-            <input type="number" id="p-qty" required min="1" value="1" class="w-full border rounded-lg p-2 text-xs" oninput="calcPurchaseTotal()">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">ڪل رقم (Cost Price × Qty)</label>
-            <input type="number" id="p-total" readonly class="w-full border rounded-lg p-2 text-xs bg-slate-100 font-bold text-sky-600">
-          </div>
-          <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg text-xs hover:bg-indigo-700">آرڊر ڪنفرم ڪريو (اسٽاڪ ۽ بينڪ اپڊيٽ)</button>
-        </form>
-      </div>
-    </section>
-
-    <!-- TAB 3: CUSTOMER LEDGER & STOCK OUT -->
-    <section id="tab-sec-ledger" class="hidden space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Transaction Entry Form -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <h2 class="text-md font-bold text-slate-900 border-b pb-2">کاتي ۾ انٽري داخل ڪريو</h2>
-          <form onsubmit="handleCustomerTx(event)" class="space-y-3">
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">گراهڪ کاتو چونڊيو</label>
-              <select id="tx-head" required class="w-full border rounded-lg p-2 text-xs"></select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">انٽري جو قسم</label>
-              <select id="tx-entry-type" class="w-full border rounded-lg p-2 text-xs" onchange="toggleEntryType()">
-                <option value="cash">روڪ رقم (Cash Ledger Entry)</option>
-                <option value="product">پروڊڪٽ / سامان ڏنو (Stock OUT)</option>
-              </select>
-            </div>
-
-            <!-- Product Selection (Only if Product chosen) -->
-            <div id="product-select-box" class="hidden space-y-2 bg-amber-50 p-3 rounded-lg border border-amber-200">
-              <div>
-                <label class="block text-xs font-bold text-slate-600 mb-1">ڪهڙو پروڊڪٽ ڏنو؟</label>
-                <select id="tx-item" class="w-full border rounded-lg p-2 text-xs" onchange="calcSaleTotal()"></select>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-600 mb-1">تعداد (Qty)</label>
-                <input type="number" id="tx-qty" min="1" value="1" class="w-full border rounded-lg p-2 text-xs" oninput="calcSaleTotal()">
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">رقم (Rs.)</label>
-              <input type="number" id="tx-amount" required class="w-full border rounded-lg p-2 text-xs font-bold">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">لين دين جو قسم</label>
-              <select id="tx-side" class="w-full border rounded-lg p-2 text-xs">
-                <option value="give">اسان ڏنا / سامان ڏنو (Debit)</option>
-                <option value="receive">اسان کي مليا (Credit)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">تفصيل</label>
-              <input type="text" id="tx-desc" placeholder="تفصيل لکو..." class="w-full border rounded-lg p-2 text-xs">
-            </div>
-
-            <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2 rounded-lg text-xs hover:bg-emerald-700">انٽري سيو ڪريو</button>
-          </form>
+    <!-- Overview Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
+            <span class="text-xs text-emerald-600 font-semibold uppercase">مون وٺڻا آھن (Receivable)</span>
+            <div id="total-receivable" class="text-2xl font-black text-emerald-700 mt-1">Rs. 0</div>
         </div>
+        <div class="bg-rose-50 border border-rose-200 p-4 rounded-xl">
+            <span class="text-xs text-rose-600 font-semibold uppercase">مون ڏيڻا آھن (Payable)</span>
+            <div id="total-payable" class="text-2xl font-black text-rose-700 mt-1">Rs. 0</div>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+            <span class="text-xs text-blue-600 font-semibold uppercase">بينڪن ۾ موجود رقم</span>
+            <div id="total-bank-balance" class="text-2xl font-black text-blue-700 mt-1">Rs. 0</div>
+        </div>
+        <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl">
+            <span class="text-xs text-amber-600 font-semibold uppercase">اسٽاڪ جي جملي قيمت</span>
+            <div id="total-stock-value" class="text-2xl font-black text-amber-700 mt-1">Rs. 0</div>
+        </div>
+    </div>
 
-        <!-- Inventory Status & Ledger Display -->
-        <div class="lg:col-span-2 space-y-6">
-          
-          <!-- Stock Live Quantity Box -->
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <h3 class="text-xs font-bold text-slate-500 mb-2">موجوده آٽوميٽڊ اسٽاڪ بيلنس (Live Stock)</h3>
-            <div id="live-stock-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-          </div>
-
-          <!-- Ledger Table -->
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <h3 class="text-xs font-bold text-slate-500 mb-2">تازيون لين دينون (Ledger Transactions)</h3>
-            <div class="overflow-x-auto">
-              <table class="w-full text-xs text-right">
-                <thead class="bg-slate-50 border-b">
-                  <tr>
-                    <th class="p-2">تاريخ</th>
-                    <th class="p-2">کاتو</th>
-                    <th class="p-2">تفصيل</th>
-                    <th class="p-2">ڏنا / سامان</th>
-                    <th class="p-2">مليا</th>
-                  </tr>
+    <!-- Section 1: Ledgers (خاتا) -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <h2 class="text-lg font-bold text-slate-700 border-b pb-2">1. ليجر / کاتن جي تفصيل</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-right text-sm">
+                <thead class="bg-slate-50 text-slate-500 uppercase text-xs border-b">
+                    <tr>
+                        <th class="py-3 px-4">پارٽيءَ جو نالو</th>
+                        <th class="py-3 px-4">قسم</th>
+                        <th class="py-3 px-4 text-emerald-600">مون وٽان مليل / وٺڻا (Receivable)</th>
+                        <th class="py-3 px-4 text-rose-600">انھن جا مون ڏانھن (Payable)</th>
+                    </tr>
                 </thead>
-                <tbody id="ledger-table-body" class="divide-y"></tbody>
-              </table>
+                <tbody id="ledger-table-body" class="divide-y divide-slate-100">
+                    <!-- Dynamic Rows inserted via Javascript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section 2: Bank Accounts & Stock Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Bank Accounts -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+            <h2 class="text-lg font-bold text-slate-700 border-b pb-2">2. بينڪ اڪائونٽس</h2>
+            <div class="space-y-3" id="bank-accounts-list">
+                <!-- Dynamic Bank Items -->
             </div>
-          </div>
-
         </div>
 
-      </div>
-    </section>
-
-  </main>
-
-  <script>
-    const SUPABASE_URL = 'https://hhywazbkgalioqqpuhyz.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoeXdhemJrZ2FsaW9xcXB1aHl6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODE0OTI0MCwiZXhwIjoyMTAzNzI1MjQwfQ.yHHUaGrOn8gKy_1kgujNXupqziJZmQalVIS0F9AU0sY';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let items = [], banks = [], heads = [], transactions = [];
-
-    window.onload = loadData;
-
-    function switchTab(tab) {
-      document.getElementById('tab-sec-master').classList.toggle('hidden', tab !== 'master');
-      document.getElementById('tab-sec-purchase').classList.toggle('hidden', tab !== 'purchase');
-      document.getElementById('tab-sec-ledger').classList.toggle('hidden', tab !== 'ledger');
-      
-      document.getElementById('btn-master').className = tab === 'master' ? 'py-2 px-4 border-b-2 border-sky-500 text-sky-600' : 'py-2 px-4 border-b-2 border-transparent text-slate-600';
-      document.getElementById('btn-purchase').className = tab === 'purchase' ? 'py-2 px-4 border-b-2 border-sky-500 text-sky-600' : 'py-2 px-4 border-b-2 border-transparent text-slate-600';
-      document.getElementById('btn-ledger').className = tab === 'ledger' ? 'py-2 px-4 border-b-2 border-sky-500 text-sky-600' : 'py-2 px-4 border-b-2 border-transparent text-slate-600';
-    }
-
-    async function loadData() {
-      const resItems = await _supabase.from('items').select('*').order('name');
-      items = resItems.data || [];
-
-      const resBanks = await _supabase.from('bank_accounts').select('*');
-      banks = resBanks.data || [];
-
-      const resHeads = await _supabase.from('account_heads').select('*').order('name');
-      heads = resHeads.data || [];
-
-      const resTx = await _supabase.from('account_transactions').select('*, account_heads(name), items(name)').order('created_at', { ascending: false });
-      transactions = resTx.data || [];
-
-      renderAll();
-    }
-
-    function renderAll() {
-      // Render Master Items
-      document.getElementById('master-items-list').innerHTML = items.map(i => 
-        `<div class="flex justify-between bg-slate-50 p-2 rounded"><span>${i.name}</span> <span class="font-bold">Cost: ${i.cost_price} | Sale: ${i.sale_price}</span></div>`
-      ).join('');
-
-      // Populate Purchase Drops
-      const pBank = document.getElementById('p-bank');
-      pBank.innerHTML = banks.map(b => `<option value="${b.id}">${b.bank_name} (Bal: Rs. ${b.balance})</option>`).join('');
-      
-      const pItem = document.getElementById('p-item');
-      pItem.innerHTML = items.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
-      
-      // Populate Ledger Drops
-      const txHead = document.getElementById('tx-head');
-      txHead.innerHTML = heads.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
-
-      const txItem = document.getElementById('tx-item');
-      txItem.innerHTML = items.map(i => `<option value="${i.id}">${i.name} (موجوده اسٽاڪ: ${i.stock_qty})</option>`).join('');
-
-      // Live Stock Cards
-      document.getElementById('live-stock-grid').innerHTML = items.map(i => `
-        <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-center">
-          <p class="text-xs font-bold text-slate-700">${i.name}</p>
-          <p class="text-lg font-black text-amber-600">${i.stock_qty} <span class="text-[10px] text-slate-500">Qty</span></p>
+        <!-- Inventory / Stock -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+            <h2 class="text-lg font-bold text-slate-700 border-b pb-2">3. اسٽاڪ ۽ سامان (Stock)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-sm">
+                    <thead class="bg-slate-50 text-slate-500 uppercase text-xs border-b">
+                        <tr>
+                            <th class="py-3 px-3">آئيٽم</th>
+                            <th class="py-3 px-3">موجود تعداد</th>
+                            <th class="py-3 px-3">في قيمت</th>
+                            <th class="py-3 px-3">جملي ماليت</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-table-body" class="divide-y divide-slate-100">
+                        <!-- Dynamic Stock Rows -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-      `).join('');
 
-      // Render Ledger Table
-      document.getElementById('ledger-table-body').innerHTML = transactions.map(t => `
-        <tr class="hover:bg-slate-50">
-          <td class="p-2 text-slate-400">${new Date(t.created_at).toLocaleDateString('sd-PK')}</td>
-          <td class="p-2 font-bold">${t.account_heads?.name || '-'}</td>
-          <td class="p-2 text-slate-500">${t.entry_type === 'product' ? `[${t.items?.name} x ${t.qty}] ` : ''} ${t.description || ''}</td>
-          <td class="p-2 text-emerald-600 font-bold">${t.tx_type === 'give' ? 'Rs. ' + t.amount : '-'}</td>
-          <td class="p-2 text-rose-600 font-bold">${t.tx_type === 'receive' ? 'Rs. ' + t.amount : '-'}</td>
-        </tr>
-      `).join('');
+    </div>
 
-      calcPurchaseTotal();
-    }
-
-    // Item Master Submit
-    async function handleCreateItem(e) {
-      e.preventDefault();
-      await _supabase.from('items').insert([{
-        name: document.getElementById('item-name').value,
-        cost_price: parseFloat(document.getElementById('item-cost').value),
-        sale_price: parseFloat(document.getElementById('item-sale').value)
-      }]);
-      e.target.reset();
-      loadData();
-    }
-
-    // Head Submit
-    async function handleCreateHead(e) {
-      e.preventDefault();
-      await _supabase.from('account_heads').insert([{ name: document.getElementById('head-name').value, category: 'customer' }]);
-      e.target.reset();
-      loadData();
-    }
-
-    // Bank Submit
-    async function handleCreateBank(e) {
-      e.preventDefault();
-      await _supabase.from('bank_accounts').insert([{ bank_name: document.getElementById('bank-name').value, balance: parseFloat(document.getElementById('bank-bal').value) }]);
-      e.target.reset();
-      loadData();
-    }
-
-    // Calc Purchase Total
-    function calcPurchaseTotal() {
-      const itemId = document.getElementById('p-item').value;
-      const qty = parseInt(document.getElementById('p-qty').value) || 0;
-      const item = items.find(i => i.id === itemId);
-      if (item) {
-        document.getElementById('p-total').value = item.cost_price * qty;
-      }
-    }
-
-    // Handle Stock Purchase (Stock IN + Bank Deduct)
-    async function handlePurchaseStock(e) {
-      e.preventDefault();
-      const bankId = document.getElementById('p-bank').value;
-      const itemId = document.getElementById('p-item').value;
-      const qty = parseInt(document.getElementById('p-qty').value);
-      const totalCost = parseFloat(document.getElementById('p-total').value);
-
-      const bank = banks.find(b => b.id === bankId);
-      const item = items.find(i => i.id === itemId);
-
-      if (bank.balance < totalCost) {
-        alert('بينڪ ۾ رقم گهٽ آهي!');
-        return;
-      }
-
-      // 1. Deduct Bank Balance
-      await _supabase.from('bank_accounts').update({ balance: bank.balance - totalCost }).eq('id', bankId);
-
-      // 2. Add Stock Quantity
-      await _supabase.from('items').update({ stock_qty: item.stock_qty + qty }).eq('id', itemId);
-
-      alert('اسٽاڪ پلس (+ ' + qty + ') ٿي ويو ۽ بينڪ مان رقم ڪٽجي وئي!');
-      loadData();
-    }
-
-    // Toggle Entry Type
-    function toggleEntryType() {
-      const type = document.getElementById('tx-entry-type').value;
-      document.getElementById('product-select-box').classList.toggle('hidden', type !== 'product');
-      if (type === 'product') calcSaleTotal();
-    }
-
-    function calcSaleTotal() {
-      const itemId = document.getElementById('tx-item').value;
-      const qty = parseInt(document.getElementById('tx-qty').value) || 0;
-      const item = items.find(i => i.id === itemId);
-      if (item) {
-        document.getElementById('tx-amount').value = item.sale_price * qty;
-      }
-    }
-
-    // Handle Customer Tx (Stock OUT if product)
-    async function handleCustomerTx(e) {
-      e.preventDefault();
-      const account_id = document.getElementById('tx-head').value;
-      const entry_type = document.getElementById('tx-entry-type').value;
-      const amount = parseFloat(document.getElementById('tx-amount').value);
-      const tx_type = document.getElementById('tx-side').value;
-      const description = document.getElementById('tx-desc').value;
-
-      let item_id = null, qty = 0;
-
-      if (entry_type === 'product') {
-        item_id = document.getElementById('tx-item').value;
-        qty = parseInt(document.getElementById('tx-qty').value);
-
-        const item = items.find(i => i.id === item_id);
-        if (item.stock_qty < qty) {
-          alert('اسٽاڪ ۾ پروڊڪٽ گهٽ آهي! موجود اسٽاڪ: ' + item.stock_qty);
-          return;
-        }
-
-        // Deduct Stock Quantity (Stock OUT)
-        await _supabase.from('items').update({ stock_qty: item.stock_qty - qty }).eq('id', item_id);
-      }
-
-      // Save Ledger Transaction
-      await _supabase.from('account_transactions').insert([{
-        account_id, entry_type, item_id, qty, amount, tx_type, description
-      }]);
-
-      alert('انٽري سيو ٿي وئي!');
-      loadData();
-    }
-  </script>
-</body>
-</html>
+</div>
