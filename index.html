@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="sd" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>بزنس اڪائونٽنگ ۽ کاتو سسٽم</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+  <!-- Header / Topbar -->
+  <header class="bg-slate-900 text-white p-4 shadow-md">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-sky-400">بزنس اڪائونٽنگ ۽ کاتو سسٽم</h1>
+      <span class="bg-sky-500/20 text-sky-300 text-xs px-3 py-1 rounded-full border border-sky-500/30">Hasnain Communication</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto p-4 sm:p-6">
+
+    <!-- Summary Stats Bar / Balance Sheet Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-emerald-500">
+        <p class="text-xs text-slate-500 font-bold mb-1">ڪل وٺڻي رقم (Receivables)</p>
+        <p class="text-2xl font-extrabold text-emerald-600" id="total-receivable">Rs. 0</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-rose-500">
+        <p class="text-xs text-slate-500 font-bold mb-1">ڪل ڏيڻي رقم (Payables)</p>
+        <p class="text-2xl font-extrabold text-rose-600" id="total-payable">Rs. 0</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-sky-500">
+        <p class="text-xs text-slate-500 font-bold mb-1">موجوده ڪيش (Cash Balance)</p>
+        <p class="text-2xl font-extrabold text-sky-600" id="total-cash">Rs. 0</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-amber-500">
+        <p class="text-xs text-slate-500 font-bold mb-1">موجوده اسٽاڪ جائزي</p>
+        <p class="text-2xl font-extrabold text-amber-600" id="total-stock">0 Items</p>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <div class="flex border-b border-slate-300 mb-6 gap-2">
+      <button onclick="switchTab('ledger')" id="tab-btn-ledger" class="py-2 px-4 font-bold border-b-2 border-sky-500 text-sky-600 transition">کاتو ۽ ڏي وٺ (Ledger)</button>
+      <button onclick="switchTab('stock')" id="tab-btn-stock" class="py-2 px-4 font-bold border-b-2 border-transparent text-slate-600 hover:text-sky-600 transition">اسٽاڪ (Stock In / Out)</button>
+      <button onclick="switchTab('cashbook')" id="tab-btn-cashbook" class="py-2 px-4 font-bold border-b-2 border-transparent text-slate-600 hover:text-sky-600 transition">روزنامچو (Daily Cashbook)</button>
+    </div>
+
+    <!-- Tab 1: Ledger & Customers Section -->
+    <section id="tab-ledger" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Add Transaction Form -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">نئين کاتي انٽري (New Entry)</h2>
+          <form id="ledger-form" onsubmit="handleLedgerSubmit(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">ماڻهو/کسٽمر جو نالو</label>
+              <input type="text" id="customer-name" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 outline-none" placeholder="مثال: علي محمد">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">انٽري جو قسم</label>
+              <select id="transaction-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 outline-none">
+                <option value="give">مان ڏنا (مال/روڪ - Debit)</option>
+                <option value="receive">مونکي مليا (روڪ - Credit)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">رقم (Rs.)</label>
+              <input type="number" id="amount" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 outline-none" placeholder="0">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">تفصيل / تفصيلي نوٽ</label>
+              <textarea id="description" rows="2" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 outline-none" placeholder="مثال: يوفون لوڊ يا باقي رقم"></textarea>
+            </div>
+            <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-lg transition text-sm">سيو ڪريو (Save Entry)</button>
+          </form>
+        </div>
+
+        <!-- Ledger Recent Activity Table -->
+        <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">تازيون ڏي وٺ جون انٽريون</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-right">
+              <thead class="bg-slate-50 text-slate-600 border-b">
+                <tr>
+                  <th class="p-3">تاريخ</th>
+                  <th class="p-3">نالو</th>
+                  <th class="p-3">تفصيل</th>
+                  <th class="p-3">ڏنا (Debit)</th>
+                  <th class="p-3">مليا (Credit)</th>
+                </tr>
+              </thead>
+              <tbody id="ledger-table-body" class="divide-y divide-slate-100">
+                <tr>
+                  <td colspan="5" class="p-4 text-center text-slate-400">ڪو به ڊيٽا لوڊ ناهي ٿيو...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Tab 2: Stock Management Section -->
+    <section id="tab-stock" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Add Stock Form -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">اسٽاڪ انٽري (Stock In / Out)</h2>
+          <form id="stock-form" onsubmit="handleStockSubmit(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">آئٽم / پروڊڪٽ جو نالو</label>
+              <input type="text" id="item-name" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="مثال: Ufone SIM Cards">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">اسٽاڪ قسم</label>
+              <select id="stock-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                <option value="in">اسٽاڪ آيو (Stock In)</option>
+                <option value="out">اسٽاڪ ويو/وڪرو ٿيو (Stock Out)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">تعداد (Quantity)</label>
+              <input type="number" id="item-qty" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0">
+            </div>
+            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-lg transition text-sm">اسٽاڪ آپڊيٽ ڪريو</button>
+          </form>
+        </div>
+
+        <!-- Stock List Table -->
+        <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">موجود اسٽاڪ رپورٽ</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-right">
+              <thead class="bg-slate-50 text-slate-600 border-b">
+                <tr>
+                  <th class="p-3">آئٽم جو نالو</th>
+                  <th class="p-3">موجود اسٽاڪ (Stock Balance)</th>
+                  <th class="p-3">آخري آپڊيٽ</th>
+                </tr>
+              </thead>
+              <tbody id="stock-table-body" class="divide-y divide-slate-100">
+                <tr>
+                  <td colspan="3" class="p-4 text-center text-slate-400">ڪو به اسٽاڪ داخل ناهي...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Tab 3: Daily Cashbook Section -->
+    <section id="tab-cashbook" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Cash Entry Form -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">روزنامچو ڪيش انٽري</h2>
+          <form id="cash-form" onsubmit="handleCashSubmit(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">ڪيش قسم</label>
+              <select id="cash-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                <option value="in">ڪيش آيو (Cash In / آمدني)</option>
+                <option value="out">ڪيش ويو (Cash Out / خرچ)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">رقم (Rs.)</label>
+              <input type="number" id="cash-amount" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">تفصيل / سبب</label>
+              <input type="text" id="cash-desc" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="مثال: دڪان جو ڪرائو / چانهه خرچ">
+            </div>
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition text-sm">ڪيش سيو ڪريو</button>
+          </form>
+        </div>
+
+        <!-- Cash Log Table -->
+        <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">روزاني ڪيش جي هسٽري</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-right">
+              <thead class="bg-slate-50 text-slate-600 border-b">
+                <tr>
+                  <th class="p-3">تاريخ</th>
+                  <th class="p-3">تفصيل</th>
+                  <th class="p-3">آمدني (Cash In)</th>
+                  <th class="p-3">خرچ (Cash Out)</th>
+                </tr>
+              </thead>
+              <tbody id="cash-table-body" class="divide-y divide-slate-100">
+                <tr>
+                  <td colspan="4" class="p-4 text-center text-slate-400">ڪا انٽري موجود ناهي...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://hhywazbkgalioqqpuhyz.supabase.co';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_KEY_HERE';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Tab Switching Logic
+    function switchTab(tab) {
+      document.getElementById('tab-ledger').classList.add('hidden');
+      document.getElementById('tab-stock').classList.add('hidden');
+      document.getElementById('tab-cashbook').classList.add('hidden');
+
+      document.getElementById('tab-btn-ledger').className = "py-2 px-4 font-bold border-b-2 border-transparent text-slate-600 hover:text-sky-600 transition";
+      document.getElementById('tab-btn-stock').className = "py-2 px-4 font-bold border-b-2 border-transparent text-slate-600 hover:text-sky-600 transition";
+      document.getElementById('tab-btn-cashbook').className = "py-2 px-4 font-bold border-b-2 border-transparent text-slate-600 hover:text-sky-600 transition";
+
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tab}`).className = "py-2 px-4 font-bold border-b-2 border-sky-500 text-sky-600 transition";
+    }
+
+    // Ledger Submission Logic (Demo Handler)
+    function handleLedgerSubmit(e) {
+      e.preventDefault();
+      alert('کاتي جي انٽري سيو ٿي وئي!');
+      document.getElementById('ledger-form').reset();
+    }
+
+    // Stock Submission Logic
+    function handleStockSubmit(e) {
+      e.preventDefault();
+      alert('اسٽاڪ آپڊيٽ ٿي ويو!');
+      document.getElementById('stock-form').reset();
+    }
+
+    // Cash Submission Logic
+    function handleCashSubmit(e) {
+      e.preventDefault();
+      alert('ڪيش انٽري سيو ٿي وئي!');
+      document.getElementById('cash-form').reset();
+    }
+  </script>
+
+</body>
+</html>
