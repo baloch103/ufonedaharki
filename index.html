@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>بزنس اڪائونٽنگ ۽ کاتو سسٽم</title>
+  <title>ايڊمن ڪنٽرول پينل - بزنس اڪائونٽنگ</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Supabase JS Client -->
@@ -14,419 +14,361 @@
 </head>
 <body class="bg-slate-100 text-slate-800">
 
-  <!-- Header / Topbar -->
-  <header class="bg-slate-900 text-white p-4 shadow-md">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-sky-400">بزنس اڪائونٽنگ ۽ کاتو سسٽم</h1>
-      <span class="bg-sky-500/20 text-sky-300 text-xs px-3 py-1 rounded-full border border-sky-500/30">Hasnain Communication</span>
+  <!-- Admin Login Modal / Overlay -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-200">
+      <h2 class="text-2xl font-black text-slate-900 text-center mb-1">Hasnain Communication</h2>
+      <p class="text-xs text-slate-500 text-center mb-6">ايڊمن پورٽل لڳ اڻ (Admin Access Only)</p>
+      
+      <form id="admin-login-form" onsubmit="handleAdminAuth(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">ايڊمن يوزرنالو / اي ميل</label>
+          <input type="text" id="auth-email" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-sky-500" placeholder="admin@hasnain.com">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">پاسورڊ</label>
+          <input type="password" id="auth-password" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-sky-500" placeholder="••••••••">
+        </div>
+        <button type="submit" id="auth-btn" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-lg transition text-sm">داخل ٿيو (Login)</button>
+      </form>
     </div>
-  </header>
+  </div>
 
-  <!-- Main Container -->
-  <main class="max-w-7xl mx-auto p-4 sm:p-6">
+  <!-- Main Dashboard Layout -->
+  <div id="app-layout" class="hidden min-h-screen flex flex-col">
 
-    <!-- Summary Stats Bar / Balance Sheet Summary -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-emerald-500">
-        <p class="text-xs text-slate-500 font-bold mb-1">ڪل وٺڻي رقم (Receivables)</p>
-        <p class="text-2xl font-extrabold text-emerald-600" id="total-receivable">Rs. 0</p>
+    <!-- Header / Topbar -->
+    <header class="bg-slate-900 text-white p-4 shadow-md sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div>
+          <h1 class="text-xl font-black text-sky-400">ايڊمن ڪنٽرول پينل</h1>
+          <p class="text-xs text-slate-400">Hasnain Communication • Ghotki</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="bg-emerald-500/20 text-emerald-300 text-xs px-3 py-1 rounded-full border border-emerald-500/30">Admin Authorized</span>
+          <button onclick="logoutAdmin()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-3 py-1.5 rounded-lg transition">لاگ آئوٽ</button>
+        </div>
       </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-rose-500">
-        <p class="text-xs text-slate-500 font-bold mb-1">ڪل ڏيڻي رقم (Payables)</p>
-        <p class="text-2xl font-extrabold text-rose-600" id="total-payable">Rs. 0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-sky-500">
-        <p class="text-xs text-slate-500 font-bold mb-1">موجوده ڪيش (Cash Balance)</p>
-        <p class="text-2xl font-extrabold text-sky-600" id="total-cash">Rs. 0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-amber-500">
-        <p class="text-xs text-slate-500 font-bold mb-1">موجوده اسٽاڪ جائزي</p>
-        <p class="text-2xl font-extrabold text-amber-600" id="total-stock">0 Items</p>
-      </div>
-    </div>
+    </header>
 
-    <!-- Main Navigation Tabs -->
-    <div class="flex border-b border-slate-300 mb-6 gap-2">
-      <button onclick="switchTab('ledger')" id="tab-btn-ledger" class="py-2 px-4 font-bold border-b-2 border-sky-500 text-sky-600 transition">کاتو ۽ ڏي وٺ (Ledger)</button>
-      <button onclick="switchTab('stock')" id="tab-btn-stock" class="py-2 px-4 font-bold border-b-2 border-transparent text-slate-600 hover:text-sky-600 transition">اسٽاڪ (Stock In / Out)</button>
-      <button onclick="switchTab('cashbook')" id="tab-btn-cashbook" class="py-2 px-4 font-bold border-b-2 border-transparent text-slate-600 hover:text-sky-600 transition">روزنامچو (Daily Cashbook)</button>
-    </div>
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 flex-grow w-full space-y-6">
 
-    <!-- Tab 1: Ledger & Customers Section -->
-    <section id="tab-ledger" class="space-y-6">
+      <!-- Stats Overview / Balance Sheet -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-emerald-500">
+          <p class="text-xs text-slate-500 font-bold mb-1">ڪل وٺڻي (Receivable Balance)</p>
+          <p class="text-2xl font-black text-emerald-600" id="total-receivable">Rs. 0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-rose-500">
+          <p class="text-xs text-slate-500 font-bold mb-1">ڪل ڏيڻي (Payable Balance)</p>
+          <p class="text-2xl font-black text-rose-600" id="total-payable">Rs. 0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-sky-500">
+          <p class="text-xs text-slate-500 font-bold mb-1">ايپملائي ائڊوانس/باقي (Employee)</p>
+          <p class="text-2xl font-black text-sky-600" id="total-employee">Rs. 0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-r-4 border-r-indigo-500">
+          <p class="text-xs text-slate-500 font-bold mb-1">دڪاندارن سان ڏي وٺ (Shopkeepers)</p>
+          <p class="text-2xl font-black text-indigo-600" id="total-shopkeeper">Rs. 0</p>
+        </div>
+      </div>
+
+      <!-- Action Area: Add Account & New Entry Forms -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <!-- Add Transaction Form -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">نئين کاتي انٽري (New Entry)</h2>
-          <form id="ledger-form" onsubmit="handleLedgerSubmit(event)" class="space-y-4">
+        <!-- Form 1: New Account Profile (نئون کاتو ٺاهيو) -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h2 class="text-base font-bold text-slate-900 border-b pb-2 flex items-center justify-between">
+            <span>نئون کاتو / اڪائونٽ جوڙيو</span>
+            <span class="text-xs bg-sky-100 text-sky-700 px-2 py-0.5 rounded">Setup</span>
+          </h2>
+          <form id="account-form" onsubmit="handleAccountSubmit(event)" class="space-y-3">
             <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">ماڻهو/کسٽمر جو نالو</label>
-              <input type="text" id="customer-name" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 outline-none" placeholder="مثال: علي محمد">
+              <label class="block text-xs font-bold text-slate-600 mb-1">نام / دڪان جو نالو</label>
+              <input type="text" id="acc-name" required class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-sky-500" placeholder="مثال: علي رضا (ملازم)">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">ڪيٽيگري چونڊيو</label>
+              <select id="acc-category" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-sky-500">
+                <option value="employee">ايمپلائي / ملازم (Employee)</option>
+                <option value="shopkeeper">عام دڪاندار / ڊيلر (Shopkeeper)</option>
+                <option value="general">عام کاتو (General Customer)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">موبائل نمبر / رابطو</label>
+              <input type="text" id="acc-phone" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-sky-500" placeholder="03001234567">
+            </div>
+            <button type="submit" id="acc-btn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-lg text-sm transition">نئون کاتو سيو ڪريو</button>
+          </form>
+        </div>
+
+        <!-- Form 2: Transaction Entry (ڏي وٺ انٽري) -->
+        <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h2 class="text-base font-bold text-slate-900 border-b pb-2">کاتي جي ڏي وٺ انٽري (New Transaction)</h2>
+          <form id="trans-form" onsubmit="handleTransSubmit(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input type="hidden" id="edit-trans-id">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">کاتو/شخص چونڊيو</label>
+              <select id="trans-account-id" required class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-sky-500">
+                <option value="">چونڊيو...</option>
+              </select>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-600 mb-1">انٽري جو قسم</label>
-              <select id="transaction-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 outline-none">
-                <option value="give">مان ڏنا (مال/روڪ - Debit)</option>
-                <option value="receive">مونکي مليا (روڪ - Credit)</option>
+              <select id="trans-type" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-sky-500">
+                <option value="give">اسان ڏنا / نام لکيو (Debit)</option>
+                <option value="receive">اسان وٽ جمع ٿيا (Credit)</option>
               </select>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-600 mb-1">رقم (Rs.)</label>
-              <input type="number" id="amount" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 outline-none" placeholder="0">
+              <input type="number" id="trans-amount" required class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-sky-500" placeholder="0">
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">تفصيل / تفصيلي نوٽ</label>
-              <textarea id="description" rows="2" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 outline-none" placeholder="مثال: يوفون لوڊ يا باقي رقم"></textarea>
+              <label class="block text-xs font-bold text-slate-600 mb-1">تفصيل / ويرم</label>
+              <input type="text" id="trans-desc" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-sky-500" placeholder="مثال: يوفون لوڊ / پگهار / باقي">
             </div>
-            <button type="submit" id="ledger-btn" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-lg transition text-sm">سيو ڪريو (Save Entry)</button>
+            <div class="sm:col-span-2 flex gap-2">
+              <button type="submit" id="trans-btn" class="flex-grow bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 rounded-lg text-sm transition">انٽري محفوظ ڪريو</button>
+              <button type="button" id="trans-cancel-btn" onclick="resetTransForm()" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-lg text-sm">منسوخ</button>
+            </div>
           </form>
         </div>
 
-        <!-- Ledger Recent Activity Table -->
-        <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">تازيون ڏي وٺ جون انٽريون</h2>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-right">
-              <thead class="bg-slate-50 text-slate-600 border-b">
-                <tr>
-                  <th class="p-3">تاريخ</th>
-                  <th class="p-3">نالو</th>
-                  <th class="p-3">تفصيل</th>
-                  <th class="p-3">ڏنا (Debit)</th>
-                  <th class="p-3">مليا (Credit)</th>
-                </tr>
-              </thead>
-              <tbody id="ledger-table-body" class="divide-y divide-slate-100">
-                <tr>
-                  <td colspan="5" class="p-4 text-center text-slate-400">لوڊ ٿي رهيو آهي...</td>
-                </tr>
-              </tbody>
-            </table>
+      </div>
+
+      <!-- Category Filter Tabs & Main Ledger History Table -->
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-wrap justify-between items-center gap-4 border-b pb-3">
+          <h2 class="text-base font-bold text-slate-900">ايڊمن کاتو رپورٽ ۽ هسٽري</h2>
+          
+          <!-- Category Filters -->
+          <div class="flex gap-2">
+            <button onclick="filterCategory('all')" id="filter-all" class="px-3 py-1 rounded-lg text-xs font-bold bg-sky-600 text-white">سڀ کاتا</button>
+            <button onclick="filterCategory('employee')" id="filter-employee" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">ايمپلائي کاتو</button>
+            <button onclick="filterCategory('shopkeeper')" id="filter-shopkeeper" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">دڪاندار کاتو</button>
           </div>
         </div>
 
+        <!-- Ledger Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-right">
+            <thead class="bg-slate-50 text-slate-600 border-b">
+              <tr>
+                <th class="p-3">تاريخ</th>
+                <th class="p-3">نالو (کاتو)</th>
+                <th class="p-3">ڪيٽيگري</th>
+                <th class="p-3">تفصيل</th>
+                <th class="p-3">نام (Debit)</th>
+                <th class="p-3">جمع (Credit)</th>
+                <th class="p-3 text-center">ايڊمن اختيار (Edit/Del)</th>
+              </tr>
+            </thead>
+            <tbody id="trans-table-body" class="divide-y divide-slate-100">
+              <tr>
+                <td colspan="7" class="p-4 text-center text-slate-400">لوڊ ٿي رهيو آهي...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </section>
 
-    <!-- Tab 2: Stock Management Section -->
-    <section id="tab-stock" class="hidden space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Add Stock Form -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">اسٽاڪ انٽري (Stock In / Out)</h2>
-          <form id="stock-form" onsubmit="handleStockSubmit(event)" class="space-y-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">آئٽم / پروڊڪٽ جو نالو</label>
-              <input type="text" id="item-name" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="مثال: Ufone SIM Cards">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">اسٽاڪ قسم</label>
-              <select id="stock-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
-                <option value="in">اسٽاڪ آيو (Stock In)</option>
-                <option value="out">اسٽاڪ ويو/وڪرو ٿيو (Stock Out)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">تعداد (Quantity)</label>
-              <input type="number" id="item-qty" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0">
-            </div>
-            <button type="submit" id="stock-btn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-lg transition text-sm">اسٽاڪ آپڊيٽ ڪريو</button>
-          </form>
-        </div>
+    </main>
+  </div>
 
-        <!-- Stock List Table -->
-        <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">موجود اسٽاڪ رپورٽ</h2>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-right">
-              <thead class="bg-slate-50 text-slate-600 border-b">
-                <tr>
-                  <th class="p-3">آئٽم جو نالو</th>
-                  <th class="p-3">موجود اسٽاڪ (Stock Balance)</th>
-                  <th class="p-3">آخري آپڊيٽ</th>
-                </tr>
-              </thead>
-              <tbody id="stock-table-body" class="divide-y divide-slate-100">
-                <tr>
-                  <td colspan="3" class="p-4 text-center text-slate-400">لوڊ ٿي رهيو آهي...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- Tab 3: Daily Cashbook Section -->
-    <section id="tab-cashbook" class="hidden space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Cash Entry Form -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">روزنامچو ڪيش انٽري</h2>
-          <form id="cash-form" onsubmit="handleCashSubmit(event)" class="space-y-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">ڪيش قسم</label>
-              <select id="cash-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                <option value="in">ڪيش آيو (Cash In / آمدني)</option>
-                <option value="out">ڪيش ويو (Cash Out / خرچ)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">رقم (Rs.)</label>
-              <input type="number" id="cash-amount" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">تفصيل / سبب</label>
-              <input type="text" id="cash-desc" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="مثال: دڪان جو ڪرائو / چانهه خرچ">
-            </div>
-            <button type="submit" id="cash-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition text-sm">ڪيش سيو ڪريو</button>
-          </form>
-        </div>
-
-        <!-- Cash Log Table -->
-        <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">روزاني ڪيش جي هسٽري</h2>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-right">
-              <thead class="bg-slate-50 text-slate-600 border-b">
-                <tr>
-                  <th class="p-3">تاريخ</th>
-                  <th class="p-3">تفصيل</th>
-                  <th class="p-3">آمدني (Cash In)</th>
-                  <th class="p-3">خرچ (Cash Out)</th>
-                </tr>
-              </thead>
-              <tbody id="cash-table-body" class="divide-y divide-slate-100">
-                <tr>
-                  <td colspan="4" class="p-4 text-center text-slate-400">لوڊ ٿي رهيو آهي...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-  </main>
-
-  <!-- JavaScript Logic -->
   <script>
+    // Supabase Config
     const SUPABASE_URL = 'https://hhywazbkgalioqqpuhyz.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoeXdhemJrZ2FsaW9xcXB1aHl6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODE0OTI0MCwiZXhwIjoyMTAzNzI1MjQwfQ.yHHUaGrOn8gKy_1kgujNXupqziJZmQalVIS0F9AU0sY';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Tab Switching Logic
-    function switchTab(tab) {
-      document.getElementById('tab-ledger').classList.add('hidden');
-      document.getElementById('tab-stock').classList.add('hidden');
-      document.getElementById('tab-cashbook').classList.add('hidden');
+    let currentCategoryFilter = 'all';
+    let accountsList = [];
 
-      document.getElementById('tab-btn-ledger').className = "py-2 px-4 font-bold border-b-2 border-transparent text-slate-600 hover:text-sky-600 transition";
-      document.getElementById('tab-btn-stock').className = "py-2 px-4 font-bold border-b-2 border-transparent text-slate-600 hover:text-sky-600 transition";
-      document.getElementById('tab-btn-cashbook').className = "py-2 px-4 font-bold border-b-2 border-transparent text-slate-600 hover:text-sky-600 transition";
-
-      document.getElementById(`tab-${tab}`).classList.remove('hidden');
-      document.getElementById(`tab-btn-${tab}`).className = "py-2 px-4 font-bold border-b-2 border-sky-500 text-sky-600 transition";
+    // Simple Admin Auth Check
+    function handleAdminAuth(e) {
+      e.preventDefault();
+      const pass = document.getElementById('auth-password').value;
+      if (pass === 'admin123' || pass === 'hasnain') {
+        localStorage.setItem('admin_session', 'true');
+        checkSession();
+      } else {
+        alert('غلط پاسورڊ! صحيح پاسورڊ داخل ڪريو.');
+      }
     }
 
-    // Initialize Page Data
-    document.addEventListener("DOMContentLoaded", () => {
-      fetchLedger();
-      fetchStock();
-      fetchCash();
-    });
+    function checkSession() {
+      const active = localStorage.getItem('admin_session');
+      if (active === 'true') {
+        document.getElementById('login-modal').classList.add('hidden');
+        document.getElementById('app-layout').classList.remove('hidden');
+        loadAllData();
+      }
+    }
 
-    // 1. Fetch & Render Ledger Data
-    async function fetchLedger() {
-      const { data, error } = await _supabase.from('ledger').select('*').order('created_at', { ascending: false });
-      const tbody = document.getElementById('ledger-table-body');
+    function logoutAdmin() {
+      localStorage.removeItem('admin_session');
+      location.reload();
+    }
+
+    // Load All Data
+    async function loadAllData() {
+      await fetchAccounts();
+      await fetchTransactions();
+    }
+
+    // 1. Fetch Accounts
+    async function fetchAccounts() {
+      const { data, error } = await _supabase.from('accounts').select('*').order('name');
+      if (error) console.error(error);
+      accountsList = data || [];
       
+      const select = document.getElementById('trans-account-id');
+      select.innerHTML = '<option value="">چونڊيو...</option>' + 
+        accountsList.map(a => `<option value="${a.id}">${a.name} (${a.category})</option>`).join('');
+    }
+
+    // Save Account
+    async function handleAccountSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('acc-name').value;
+      const category = document.getElementById('acc-category').value;
+      const phone = document.getElementById('acc-phone').value;
+
+      const { error } = await _supabase.from('accounts').insert([{ name, category, phone }]);
       if (error) {
-        console.error(error);
-        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-rose-500">ڊيٽا لوڊ ڪرڻ ۾ غلطي! Supabase Tables چيڪ ڪريو.</td></tr>`;
+        alert('غلطي: ' + error.message);
+      } else {
+        document.getElementById('account-form').reset();
+        await loadAllData();
+      }
+    }
+
+    // 2. Fetch Transactions & Update Balances
+    async function fetchTransactions() {
+      const { data, error } = await _supabase.from('transactions').select('*, accounts(name, category)').order('created_at', { ascending: false });
+      const tbody = document.getElementById('trans-table-body');
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-500">ڊيٽا لوڊ ڪرڻ ۾ غلطي! ٽيبلون چيڪ ڪريو.</td></tr>`;
         return;
       }
 
-      let totalReceivable = 0;
-      let totalPayable = 0;
+      let totReceivable = 0, totPayable = 0, totEmp = 0, totShop = 0;
 
-      if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">ڪو به رڪارڊ ناهي.</td></tr>`;
+      const filtered = data ? data.filter(t => currentCategoryFilter === 'all' || t.accounts?.category === currentCategoryFilter) : [];
+
+      data?.forEach(t => {
+        const amt = Number(t.amount);
+        if (t.type === 'give') {
+          totReceivable += amt;
+          if (t.accounts?.category === 'employee') totEmp += amt;
+          if (t.accounts?.category === 'shopkeeper') totShop += amt;
+        } else {
+          totPayable += amt;
+          if (t.accounts?.category === 'employee') totEmp -= amt;
+          if (t.accounts?.category === 'shopkeeper') totShop -= amt;
+        }
+      });
+
+      document.getElementById('total-receivable').innerText = `Rs. ${totReceivable}`;
+      document.getElementById('total-payable').innerText = `Rs. ${totPayable}`;
+      document.getElementById('total-employee').innerText = `Rs. ${totEmp}`;
+      document.getElementById('total-shopkeeper').innerText = `Rs. ${totShop}`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">ڪو به رڪارڊ موجود ناهي.</td></tr>`;
       } else {
-        tbody.innerHTML = data.map(item => {
-          const isGive = item.type === 'give';
-          const giveVal = isGive ? item.amount : 0;
-          const receiveVal = !isGive ? item.amount : 0;
+        tbody.innerHTML = filtered.map(t => {
+          const date = new Date(t.created_at).toLocaleDateString('sd-PK', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+          const isGive = t.type === 'give';
           
-          if(isGive) totalReceivable += Number(item.amount);
-          else totalPayable += Number(item.amount);
-
-          const formattedDate = new Date(item.created_at).toLocaleDateString('sd-PK', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
-
           return `
             <tr class="hover:bg-slate-50">
-              <td class="p-3 text-slate-500 text-xs">${formattedDate}</td>
-              <td class="p-3 font-bold text-slate-800">${item.customer_name}</td>
-              <td class="p-3 text-slate-600">${item.description || '-'}</td>
-              <td class="p-3 font-bold text-emerald-600">${giveVal ? 'Rs. ' + giveVal : '-'}</td>
-              <td class="p-3 font-bold text-rose-600">${receiveVal ? 'Rs. ' + receiveVal : '-'}</td>
+              <td class="p-3 text-xs text-slate-500">${date}</td>
+              <td class="p-3 font-bold text-slate-800">${t.accounts?.name || 'موجود ناهي'}</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-bold ${t.accounts?.category === 'employee' ? 'bg-sky-100 text-sky-700' : 'bg-indigo-100 text-indigo-700'}">${t.accounts?.category || 'عام'}</span></td>
+              <td class="p-3 text-slate-600">${t.description || '-'}</td>
+              <td class="p-3 font-bold text-emerald-600">${isGive ? 'Rs. ' + t.amount : '-'}</td>
+              <td class="p-3 font-bold text-rose-600">${!isGive ? 'Rs. ' + t.amount : '-'}</td>
+              <td class="p-3 text-center space-x-2 space-x-reverse">
+                <button onclick="editTrans('${t.id}', '${t.account_id}', '${t.type}', '${t.amount}', '${t.description}')" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded">ايڊٽ</button>
+                <button onclick="deleteTrans('${t.id}')" class="text-xs bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 rounded">ڊليٽ</button>
+              </td>
             </tr>
           `;
         }).join('');
       }
-
-      document.getElementById('total-receivable').innerText = `Rs. ${totalReceivable}`;
-      document.getElementById('total-payable').innerText = `Rs. ${totalPayable}`;
     }
 
-    // Submit Ledger
-    async function handleLedgerSubmit(e) {
+    // Add / Edit Transaction
+    async function handleTransSubmit(e) {
       e.preventDefault();
-      const btn = document.getElementById('ledger-btn');
-      btn.innerText = "سيو ٿي رهيو آهي...";
-      btn.disabled = true;
+      const id = document.getElementById('edit-trans-id').value;
+      const account_id = document.getElementById('trans-account-id').value;
+      const type = document.getElementById('trans-type').value;
+      const amount = parseFloat(document.getElementById('trans-amount').value);
+      const description = document.getElementById('trans-desc').value;
 
-      const customer_name = document.getElementById('customer-name').value;
-      const type = document.getElementById('transaction-type').value;
-      const amount = parseFloat(document.getElementById('amount').value);
-      const description = document.getElementById('description').value;
-
-      const { error } = await _supabase.from('ledger').insert([{ customer_name, type, amount, description }]);
-
-      btn.innerText = "سيو ڪريو (Save Entry)";
-      btn.disabled = false;
-
-      if (error) {
-        alert('غلطي: ' + error.message);
+      if (id) {
+        // Edit Mode
+        const { error } = await _supabase.from('transactions').update({ account_id, type, amount, description }).eq('id', id);
+        if (error) alert(error.message);
       } else {
-        document.getElementById('ledger-form').reset();
-        fetchLedger();
+        // New Mode
+        const { error } = await _supabase.from('transactions').insert([{ account_id, type, amount, description }]);
+        if (error) alert(error.message);
+      }
+
+      resetTransForm();
+      fetchTransactions();
+    }
+
+    // Populate Edit Mode
+    function editTrans(id, account_id, type, amount, description) {
+      document.getElementById('edit-trans-id').value = id;
+      document.getElementById('trans-account-id').value = account_id;
+      document.getElementById('trans-type').value = type;
+      document.getElementById('trans-amount').value = amount;
+      document.getElementById('trans-desc').value = description || '';
+
+      document.getElementById('trans-btn').innerText = "آپڊيٽ سيو ڪريو (Update)";
+      document.getElementById('trans-cancel-btn').classList.remove('hidden');
+    }
+
+    function resetTransForm() {
+      document.getElementById('trans-form').reset();
+      document.getElementById('edit-trans-id').value = '';
+      document.getElementById('trans-btn').innerText = "انٽري محفوظ ڪريو";
+      document.getElementById('trans-cancel-btn').classList.add('hidden');
+    }
+
+    // Delete Record (Admin Special Power)
+    async function deleteTrans(id) {
+      if (confirm('ڇا توهان واقعي هيء انٽري ڊليٽ ڪرڻ چاهيو ٿا؟')) {
+        const { error } = await _supabase.from('transactions').delete().eq('id', id);
+        if (error) alert(error.message);
+        else fetchTransactions();
       }
     }
 
-    // 2. Fetch & Render Stock Data
-    async function fetchStock() {
-      const { data, error } = await _supabase.from('stock').select('*').order('created_at', { ascending: false });
-      const tbody = document.getElementById('stock-table-body');
-      
-      if (error) {
-        tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-rose-500">ڊيٽا لوڊ ڪرڻ ۾ غلطي!</td></tr>`;
-        return;
-      }
-
-      let totalStockItems = 0;
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-400">ڪو به اسٽاڪ ناهي.</td></tr>`;
-      } else {
-        totalStockItems = data.length;
-        tbody.innerHTML = data.map(item => {
-          const formattedDate = new Date(item.created_at).toLocaleDateString('sd-PK');
-          return `
-            <tr class="hover:bg-slate-50">
-              <td class="p-3 font-bold text-slate-800">${item.item_name}</td>
-              <td class="p-3 font-extrabold ${item.quantity > 0 ? 'text-amber-600' : 'text-rose-600'}">${item.quantity} Qty</td>
-              <td class="p-3 text-slate-500 text-xs">${formattedDate}</td>
-            </tr>
-          `;
-        }).join('');
-      }
-
-      document.getElementById('total-stock').innerText = `${totalStockItems} Items`;
+    // Category Filter Buttons Switch
+    function filterCategory(cat) {
+      currentCategoryFilter = cat;
+      ['all', 'employee', 'shopkeeper'].forEach(c => {
+        const btn = document.getElementById(`filter-${c}`);
+        if (c === cat) {
+          btn.className = "px-3 py-1 rounded-lg text-xs font-bold bg-sky-600 text-white";
+        } else {
+          btn.className = "px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200";
+        }
+      });
+      fetchTransactions();
     }
 
-    // Submit Stock
-    async function handleStockSubmit(e) {
-      e.preventDefault();
-      const btn = document.getElementById('stock-btn');
-      btn.innerText = "آپڊيٽ ٿي رهيو آهي...";
-      btn.disabled = true;
-
-      const item_name = document.getElementById('item-name').value;
-      const type = document.getElementById('stock-type').value;
-      let qty = parseInt(document.getElementById('item-qty').value);
-      if (type === 'out') qty = -qty;
-
-      const { error } = await _supabase.from('stock').insert([{ item_name, quantity: qty }]);
-
-      btn.innerText = "اسٽاڪ آپڊيٽ ڪريو";
-      btn.disabled = false;
-
-      if (error) {
-        alert('غلطي: ' + error.message);
-      } else {
-        document.getElementById('stock-form').reset();
-        fetchStock();
-      }
-    }
-
-    // 3. Fetch & Render Cashbook Data
-    async function fetchCash() {
-      const { data, error } = await _supabase.from('cashbook').select('*').order('created_at', { ascending: false });
-      const tbody = document.getElementById('cash-table-body');
-      
-      if (error) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-500">ڊيٽا لوڊ ڪرڻ ۾ غلطي!</td></tr>`;
-        return;
-      }
-
-      let totalCash = 0;
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">ڪا به ڪيش انٽري ناهي.</td></tr>`;
-      } else {
-        tbody.innerHTML = data.map(item => {
-          const isIn = item.type === 'in';
-          const cashIn = isIn ? item.amount : 0;
-          const cashOut = !isIn ? item.amount : 0;
-          
-          if (isIn) totalCash += Number(item.amount);
-          else totalCash -= Number(item.amount);
-
-          const formattedDate = new Date(item.created_at).toLocaleDateString('sd-PK', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
-
-          return `
-            <tr class="hover:bg-slate-50">
-              <td class="p-3 text-slate-500 text-xs">${formattedDate}</td>
-              <td class="p-3 font-bold text-slate-800">${item.description}</td>
-              <td class="p-3 font-bold text-emerald-600">${cashIn ? 'Rs. ' + cashIn : '-'}</td>
-              <td class="p-3 font-bold text-rose-600">${cashOut ? 'Rs. ' + cashOut : '-'}</td>
-            </tr>
-          `;
-        }).join('');
-      }
-
-      document.getElementById('total-cash').innerText = `Rs. ${totalCash}`;
-    }
-
-    // Submit Cash
-    async function handleCashSubmit(e) {
-      e.preventDefault();
-      const btn = document.getElementById('cash-btn');
-      btn.innerText = "سيو ٿي رهيو آهي...";
-      btn.disabled = true;
-
-      const type = document.getElementById('cash-type').value;
-      const amount = parseFloat(document.getElementById('cash-amount').value);
-      const description = document.getElementById('cash-desc').value;
-
-      const { error } = await _supabase.from('cashbook').insert([{ type, amount, description }]);
-
-      btn.innerText = "ڪيش سيو ڪريو";
-      btn.disabled = false;
-
-      if (error) {
-        alert('غلطي: ' + error.message);
-      } else {
-        document.getElementById('cash-form').reset();
-        fetchCash();
-      }
-    }
+    // Auto-Run
+    document.addEventListener("DOMContentLoaded", checkSession);
   </script>
 
 </body>
