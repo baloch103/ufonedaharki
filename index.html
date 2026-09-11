@@ -79,7 +79,7 @@
               <label class="block text-xs font-bold text-slate-600 mb-1">تفصيل / تفصيلي نوٽ</label>
               <textarea id="description" rows="2" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 outline-none" placeholder="مثال: يوفون لوڊ يا باقي رقم"></textarea>
             </div>
-            <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-lg transition text-sm">سيو ڪريو (Save Entry)</button>
+            <button type="submit" id="ledger-btn" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-lg transition text-sm">سيو ڪريو (Save Entry)</button>
           </form>
         </div>
 
@@ -99,7 +99,7 @@
               </thead>
               <tbody id="ledger-table-body" class="divide-y divide-slate-100">
                 <tr>
-                  <td colspan="5" class="p-4 text-center text-slate-400">ڪو به ڊيٽا لوڊ ناهي ٿيو...</td>
+                  <td colspan="5" class="p-4 text-center text-slate-400">لوڊ ٿي رهيو آهي...</td>
                 </tr>
               </tbody>
             </table>
@@ -132,7 +132,7 @@
               <label class="block text-xs font-bold text-slate-600 mb-1">تعداد (Quantity)</label>
               <input type="number" id="item-qty" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0">
             </div>
-            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-lg transition text-sm">اسٽاڪ آپڊيٽ ڪريو</button>
+            <button type="submit" id="stock-btn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-lg transition text-sm">اسٽاڪ آپڊيٽ ڪريو</button>
           </form>
         </div>
 
@@ -150,7 +150,7 @@
               </thead>
               <tbody id="stock-table-body" class="divide-y divide-slate-100">
                 <tr>
-                  <td colspan="3" class="p-4 text-center text-slate-400">ڪو به اسٽاڪ داخل ناهي...</td>
+                  <td colspan="3" class="p-4 text-center text-slate-400">لوڊ ٿي رهيو آهي...</td>
                 </tr>
               </tbody>
             </table>
@@ -183,7 +183,7 @@
               <label class="block text-xs font-bold text-slate-600 mb-1">تفصيل / سبب</label>
               <input type="text" id="cash-desc" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="مثال: دڪان جو ڪرائو / چانهه خرچ">
             </div>
-            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition text-sm">ڪيش سيو ڪريو</button>
+            <button type="submit" id="cash-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition text-sm">ڪيش سيو ڪريو</button>
           </form>
         </div>
 
@@ -202,7 +202,7 @@
               </thead>
               <tbody id="cash-table-body" class="divide-y divide-slate-100">
                 <tr>
-                  <td colspan="4" class="p-4 text-center text-slate-400">ڪا انٽري موجود ناهي...</td>
+                  <td colspan="4" class="p-4 text-center text-slate-400">لوڊ ٿي رهيو آهي...</td>
                 </tr>
               </tbody>
             </table>
@@ -215,7 +215,7 @@
   </main>
 
   <!-- JavaScript Logic -->
-   <script>
+  <script>
     const SUPABASE_URL = 'https://hhywazbkgalioqqpuhyz.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoeXdhemJrZ2FsaW9xcXB1aHl6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODE0OTI0MCwiZXhwIjoyMTAzNzI1MjQwfQ.yHHUaGrOn8gKy_1kgujNXupqziJZmQalVIS0F9AU0sY';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -234,25 +234,198 @@
       document.getElementById(`tab-btn-${tab}`).className = "py-2 px-4 font-bold border-b-2 border-sky-500 text-sky-600 transition";
     }
 
-    // Ledger Submission Logic (Demo Handler)
-    function handleLedgerSubmit(e) {
-      e.preventDefault();
-      alert('کاتي جي انٽري سيو ٿي وئي!');
-      document.getElementById('ledger-form').reset();
+    // Initialize Page Data
+    document.addEventListener("DOMContentLoaded", () => {
+      fetchLedger();
+      fetchStock();
+      fetchCash();
+    });
+
+    // 1. Fetch & Render Ledger Data
+    async function fetchLedger() {
+      const { data, error } = await _supabase.from('ledger').select('*').order('created_at', { ascending: false });
+      const tbody = document.getElementById('ledger-table-body');
+      
+      if (error) {
+        console.error(error);
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-rose-500">ڊيٽا لوڊ ڪرڻ ۾ غلطي! Supabase Tables چيڪ ڪريو.</td></tr>`;
+        return;
+      }
+
+      let totalReceivable = 0;
+      let totalPayable = 0;
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">ڪو به رڪارڊ ناهي.</td></tr>`;
+      } else {
+        tbody.innerHTML = data.map(item => {
+          const isGive = item.type === 'give';
+          const giveVal = isGive ? item.amount : 0;
+          const receiveVal = !isGive ? item.amount : 0;
+          
+          if(isGive) totalReceivable += Number(item.amount);
+          else totalPayable += Number(item.amount);
+
+          const formattedDate = new Date(item.created_at).toLocaleDateString('sd-PK', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+
+          return `
+            <tr class="hover:bg-slate-50">
+              <td class="p-3 text-slate-500 text-xs">${formattedDate}</td>
+              <td class="p-3 font-bold text-slate-800">${item.customer_name}</td>
+              <td class="p-3 text-slate-600">${item.description || '-'}</td>
+              <td class="p-3 font-bold text-emerald-600">${giveVal ? 'Rs. ' + giveVal : '-'}</td>
+              <td class="p-3 font-bold text-rose-600">${receiveVal ? 'Rs. ' + receiveVal : '-'}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('total-receivable').innerText = `Rs. ${totalReceivable}`;
+      document.getElementById('total-payable').innerText = `Rs. ${totalPayable}`;
     }
 
-    // Stock Submission Logic
-    function handleStockSubmit(e) {
+    // Submit Ledger
+    async function handleLedgerSubmit(e) {
       e.preventDefault();
-      alert('اسٽاڪ آپڊيٽ ٿي ويو!');
-      document.getElementById('stock-form').reset();
+      const btn = document.getElementById('ledger-btn');
+      btn.innerText = "سيو ٿي رهيو آهي...";
+      btn.disabled = true;
+
+      const customer_name = document.getElementById('customer-name').value;
+      const type = document.getElementById('transaction-type').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const description = document.getElementById('description').value;
+
+      const { error } = await _supabase.from('ledger').insert([{ customer_name, type, amount, description }]);
+
+      btn.innerText = "سيو ڪريو (Save Entry)";
+      btn.disabled = false;
+
+      if (error) {
+        alert('غلطي: ' + error.message);
+      } else {
+        document.getElementById('ledger-form').reset();
+        fetchLedger();
+      }
     }
 
-    // Cash Submission Logic
-    function handleCashSubmit(e) {
+    // 2. Fetch & Render Stock Data
+    async function fetchStock() {
+      const { data, error } = await _supabase.from('stock').select('*').order('created_at', { ascending: false });
+      const tbody = document.getElementById('stock-table-body');
+      
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-rose-500">ڊيٽا لوڊ ڪرڻ ۾ غلطي!</td></tr>`;
+        return;
+      }
+
+      let totalStockItems = 0;
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-400">ڪو به اسٽاڪ ناهي.</td></tr>`;
+      } else {
+        totalStockItems = data.length;
+        tbody.innerHTML = data.map(item => {
+          const formattedDate = new Date(item.created_at).toLocaleDateString('sd-PK');
+          return `
+            <tr class="hover:bg-slate-50">
+              <td class="p-3 font-bold text-slate-800">${item.item_name}</td>
+              <td class="p-3 font-extrabold ${item.quantity > 0 ? 'text-amber-600' : 'text-rose-600'}">${item.quantity} Qty</td>
+              <td class="p-3 text-slate-500 text-xs">${formattedDate}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('total-stock').innerText = `${totalStockItems} Items`;
+    }
+
+    // Submit Stock
+    async function handleStockSubmit(e) {
       e.preventDefault();
-      alert('ڪيش انٽري سيو ٿي وئي!');
-      document.getElementById('cash-form').reset();
+      const btn = document.getElementById('stock-btn');
+      btn.innerText = "آپڊيٽ ٿي رهيو آهي...";
+      btn.disabled = true;
+
+      const item_name = document.getElementById('item-name').value;
+      const type = document.getElementById('stock-type').value;
+      let qty = parseInt(document.getElementById('item-qty').value);
+      if (type === 'out') qty = -qty;
+
+      const { error } = await _supabase.from('stock').insert([{ item_name, quantity: qty }]);
+
+      btn.innerText = "اسٽاڪ آپڊيٽ ڪريو";
+      btn.disabled = false;
+
+      if (error) {
+        alert('غلطي: ' + error.message);
+      } else {
+        document.getElementById('stock-form').reset();
+        fetchStock();
+      }
+    }
+
+    // 3. Fetch & Render Cashbook Data
+    async function fetchCash() {
+      const { data, error } = await _supabase.from('cashbook').select('*').order('created_at', { ascending: false });
+      const tbody = document.getElementById('cash-table-body');
+      
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-500">ڊيٽا لوڊ ڪرڻ ۾ غلطي!</td></tr>`;
+        return;
+      }
+
+      let totalCash = 0;
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">ڪا به ڪيش انٽري ناهي.</td></tr>`;
+      } else {
+        tbody.innerHTML = data.map(item => {
+          const isIn = item.type === 'in';
+          const cashIn = isIn ? item.amount : 0;
+          const cashOut = !isIn ? item.amount : 0;
+          
+          if (isIn) totalCash += Number(item.amount);
+          else totalCash -= Number(item.amount);
+
+          const formattedDate = new Date(item.created_at).toLocaleDateString('sd-PK', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+
+          return `
+            <tr class="hover:bg-slate-50">
+              <td class="p-3 text-slate-500 text-xs">${formattedDate}</td>
+              <td class="p-3 font-bold text-slate-800">${item.description}</td>
+              <td class="p-3 font-bold text-emerald-600">${cashIn ? 'Rs. ' + cashIn : '-'}</td>
+              <td class="p-3 font-bold text-rose-600">${cashOut ? 'Rs. ' + cashOut : '-'}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('total-cash').innerText = `Rs. ${totalCash}`;
+    }
+
+    // Submit Cash
+    async function handleCashSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('cash-btn');
+      btn.innerText = "سيو ٿي رهيو آهي...";
+      btn.disabled = true;
+
+      const type = document.getElementById('cash-type').value;
+      const amount = parseFloat(document.getElementById('cash-amount').value);
+      const description = document.getElementById('cash-desc').value;
+
+      const { error } = await _supabase.from('cashbook').insert([{ type, amount, description }]);
+
+      btn.innerText = "ڪيش سيو ڪريو";
+      btn.disabled = false;
+
+      if (error) {
+        alert('غلطي: ' + error.message);
+      } else {
+        document.getElementById('cash-form').reset();
+        fetchCash();
+      }
     }
   </script>
 
